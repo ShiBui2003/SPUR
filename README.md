@@ -4,20 +4,22 @@ A mini AI-powered customer support chat agent for **ShopEase**, a fictional e-co
 
 **Stack:** Node.js + TypeScript · React + Vite · SQLite (Node's built-in `node:sqlite`) · Meta Llama 3.3 70B via Groq
 
+**Live demo:** https://spur-pi-sandy.vercel.app
+
 ---
 
 ## Local Setup
 
 ### Prerequisites
 
-- Node.js 18+
-- A [Google Gemini API key](https://aistudio.google.com/) (free tier available)
+- Node.js 22.5+
+- A [Groq API key](https://console.groq.com) (free, no credit card required)
 
 ### 1. Clone & install
 
 ```bash
-git clone <your-repo-url>
-cd spur-chat
+git clone https://github.com/ShiBui2003/SPUR.git
+cd SPUR
 
 # Install server dependencies
 cd server && npm install && cd ..
@@ -37,10 +39,12 @@ cp server/.env.example server/.env
 Edit `server/.env`:
 
 ```
-GROQ_API_KEY=your_key_here
+GROQ_API_KEY=your_groq_key_here
 PORT=3001
 CLIENT_URL=http://localhost:5173
 ```
+
+Get a free Groq key at [console.groq.com](https://console.groq.com) — no billing required.
 
 **Client** — create `client/.env` from the example:
 
@@ -48,7 +52,7 @@ CLIENT_URL=http://localhost:5173
 cp client/.env.example client/.env
 ```
 
-The default `VITE_API_URL=http://localhost:3001` works as-is if the server runs on port 3001.
+The default `VITE_API_URL=http://localhost:3001` works as-is.
 
 ### 3. Run
 
@@ -76,7 +80,7 @@ spur-chat/
 │   └── src/
 │       ├── index.ts          # Express app, middleware wiring
 │       ├── db.ts             # SQLite singleton + schema bootstrap
-│       ├── llm.ts            # Gemini LLM service — generateReply()
+│       ├── llm.ts            # Groq LLM service — generateReply()
 │       └── routes/
 │           └── chat.ts       # POST /chat/message · GET /chat/history/:id
 └── client/
@@ -90,7 +94,7 @@ spur-chat/
 | Layer | File | Responsibility |
 |---|---|---|
 | HTTP / Routing | `routes/chat.ts` | Input validation, request/response shaping |
-| LLM Service | `llm.ts` | All Gemini API interaction, history formatting |
+| LLM Service | `llm.ts` | All Groq API interaction, history formatting |
 | Persistence | `db.ts` | SQLite connection, schema, query execution |
 | App bootstrap | `index.ts` | Express setup, CORS, middleware, listen |
 
@@ -129,7 +133,7 @@ messages      (id TEXT PK, conversationId TEXT FK, sender TEXT, text TEXT, times
 
 Node 22.5+ ships a built-in `node:sqlite` module with a synchronous API nearly identical to `better-sqlite3`. Using it means zero native compilation, no `node-gyp`, and no prebuilt binary compatibility concerns — the database just works out of the box on any Node 22+ platform.
 
-### Why Groq + Llama 3.3 over Google Gemini
+### Why Groq + Llama 3.3
 
 Groq's API is OpenAI-compatible, making the integration straightforward. Llama 3.3 70B is a top-tier open-source model that handles support conversations well. Groq's free tier requires no billing setup, unblocking local development immediately.
 
@@ -137,9 +141,10 @@ Groq's API is OpenAI-compatible, making the integration straightforward. Llama 3
 
 ## Trade-offs & If I Had More Time
 
-- **Streaming:** Gemini supports SSE streaming. Adding it would make replies feel instant rather than waiting for the full response. Skipped for simplicity.
+- **Streaming:** Groq supports SSE streaming. Adding it would make replies feel instant rather than waiting for the full response. Skipped for simplicity.
 - **Auth:** `sessionId` is trusted as-is from `localStorage`. In production this would be a signed JWT or a server-side session cookie.
 - **Redis caching:** Frequently asked questions (shipping, returns) could be answered from a cache, cutting LLM calls by ~50% for a typical store.
 - **Rate limiting:** No per-IP rate limiting. `express-rate-limit` would be a quick add.
+- **Persistent storage on Render:** The free tier's SQLite file persists within a deployment but resets on new deploys. For production, this would move to PostgreSQL.
 - **Docker Compose:** A `docker-compose.yml` would make local setup a single command — skipped since SQLite needs no database container.
 - **Multi-channel adapter pattern:** The LLM service is already channel-agnostic. A WhatsApp adapter would be ~50 lines: receive webhook → call `generateReply` → send reply via WhatsApp API.
