@@ -61,7 +61,7 @@ router.post('/message', async (req: Request, res: Response) => {
          ORDER BY timestamp DESC
          LIMIT ?`
       )
-      .all(conversationId, userMsgId, HISTORY_LIMIT) as HistoryMessage[];
+      .all(conversationId, userMsgId, HISTORY_LIMIT) as unknown as HistoryMessage[];
 
     rawHistory.reverse();
 
